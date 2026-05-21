@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>电商商品价格采集与对比工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .search-box { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .search-form { display: flex; gap: 15px; }
+        .search-form input { flex: 1; padding: 15px 20px; font-size: 16px; border: 2px solid #e0e0e0; border-radius: 8px; transition: border-color 0.3s; }
+        .search-form input:focus { outline: none; border-color: #667eea; }
+        .search-form button { padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: transform 0.2s; }
+        .search-form button:hover { transform: translateY(-2px); }
+        .search-form button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .results { margin-top: 30px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stat-card .value { font-size: 2rem; font-weight: bold; color: #667eea; }
+        .stat-card .label { color: #666; margin-top: 5px; }
+        .comparison-table { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .table-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
+        .table-header h2 { margin: 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; font-weight: 600; color: #333; }
+        tr:hover { background: #f8f9fa; }
+        .price { color: #e74c3c; font-weight: bold; }
+        .rating { color: #f39c12; }
+        .recommend { background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        a { color: #667eea; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 30px; }
+        .chart-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .chart-card img { width: 100%; border-radius: 8px; }
+        .chart-card h3 { margin-bottom: 15px; color: #333; }
+        .sample-data { background: white; border-radius: 12px; padding: 30px; margin-top: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .sample-data h3 { margin-bottom: 20px; color: #333; }
+        .sample-data .hint { color: #666; margin-bottom: 15px; font-style: italic; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 电商商品价格采集与对比工具</h1>
+            <p>自动从抖音采集商品信息，智能对比价格与性价比</p>
+        </div>
+        
+        <div class="search-box">
+            <form class="search-form" id="searchForm">
+                <input type="text" id="keyword" placeholder="请输入商品关键词，例如：手机、耳机、笔记本电脑" required>
+                <button type="submit" id="searchBtn">
+                    <span id="btnText">开始采集</span>
+                    <span id="btnLoading" style="display:none;">采集中...</span>
+                </button>
+            </form>
+        </div>
+        
+        <div id="loadingIndicator" style="display:none;">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>正在从抖音采集商品数据...</p>
+            </div>
+        </div>
+        
+        <div id="results" style="display:none;" class="results">
+            <div class="stats">
+                <div class="stat-card"><div class="value" id="statTotal">0</div><div class="label">采集商品数</div></div>
+                <div class="stat-card"><div class="value" id="statMin">¥0</div><div class="label">最低价格</div></div>
+                <div class="stat-card"><div class="value" id="statMax">¥0</div><div class="label">最高价格</div></div>
+                <div class="stat-card"><div class="value" id="statAvg">¥0</div><div class="label">平均价格</div></div>
+            </div>
+            
+            <div class="comparison-table">
+                <div class="table-header">
+                    <h2>📊 商品横向对比表 (按价格从低到高排序)</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>商品名称</th>
+                            <th>价格</th>
+                            <th>销量</th>
+                            <th>店铺评分</th>
+                            <th>店铺名称</th>
+                            <th>推荐</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productTable">
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="charts">
+                <div class="chart-card">
+                    <h3>📈 价格分布直方图</h3>
+                    <img id="priceChart" src="" alt="价格分布">
+                </div>
+                <div class="chart-card">
+                    <h3>💹 价格与销量关系</h3>
+                    <img id="salesChart" src="" alt="价格销量关系">
+                </div>
+            </div>
+        </div>
+        
+        <div id="sampleData" class="sample-data">
+            <h3>📋 示例数据展示</h3>
+            <p class="hint">以下是预设的示例数据，展示工具的核心功能：</p>
+            <div class="comparison-table">
+                <div class="table-header">
+                    <h2>🎯 示例商品对比 (关键词: 无线耳机)</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>排名</th>
+                            <th>商品名称</th>
+                            <th>价格</th>
+                            <th>销量</th>
+                            <th>店铺评分</th>
+                            <th>店铺名称</th>
+                            <th>推荐</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><a href="#" target="_blank">无线蓝牙耳机 运动跑步降噪耳...</a></td>
+                            <td class="price">¥99.00</td>
+                            <td>12,580</td>
+                            <td class="rating">4.8</td>
+                            <td>数码优选旗舰店</td>
+                            <td><span class="recommend">🔥 Top1</span></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><a href="#" target="_blank">TWS真无线耳机 高音质长续航...</a></td>
+                            <td class="price">¥159.00</td>
+                            <td>8,920</td>
+                            <td class="rating">4.7</td>
+                            <td>音频专家店铺</td>
+                            <td><span class="recommend">🔥 Top2</span></td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td><a href="#" target="_blank">主动降噪耳机 蓝牙5.3无损传...</a></td>
+                            <td class="price">¥199.00</td>
+                            <td>5,640</td>
+                            <td class="rating">4.9</td>
+                            <td>品质数码馆</td>
+                            <td><span class="recommend">🔥 Top3</span></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td><a href="#" target="_blank">运动蓝牙耳机 防水防汗 超长...</a></td>
+                            <td class="price">¥129.00</td>
+                            <td>3,280</td>
+                            <td class="rating">4.6</td>
+                            <td>运动装备店</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td><a href="#" target="_blank">高端无线耳机 HiFi音质 主动...</a></td>
+                            <td class="price">¥399.00</td>
+                            <td>2,150</td>
+                            <td class="rating">4.9</td>
+                            <td>高端音频专卖</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const keywordInput = document.getElementById('keyword');
+        const searchBtn = document.getElementById('searchBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoading = document.getElementById('btnLoading');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const results = document.getElementById('results');
+        const sampleData = document.getElementById('sampleData');
+
+        searchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const keyword = keywordInput.value.trim();
+            if (!keyword) return;
+
+            searchBtn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline';
+            loadingIndicator.style.display = 'block';
+            results.style.display = 'none';
+            sampleData.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/crawl', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.message || '采集失败');
+                }
+            } catch (error) {
+                showError('网络错误，请重试');
+            } finally {
+                searchBtn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoading.style.display = 'none';
+                loadingIndicator.style.display = 'none';
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('statTotal').textContent = data.stats.count;
+            document.getElementById('statMin').textContent = '¥' + data.stats.min_price.toFixed(2);
+            document.getElementById('statMax').textContent = '¥' + data.stats.max_price.toFixed(2);
+            document.getElementById('statAvg').textContent = '¥' + data.stats.avg_price.toFixed(2);
+
+            const tableBody = document.getElementById('productTable');
+            tableBody.innerHTML = '';
+
+            data.products.forEach((product, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><a href="${product.url}" target="_blank">${product.name.length > 30 ? product.name.slice(0, 30) + '...' : product.name}</a></td>
+                    <td class="price">¥${product.price.toFixed(2)}</td>
+                    <td>${formatSales(product.sales)}</td>
+                    <td class="rating">${product.shop_rating}</td>
+                    <td>${product.shop_name}</td>
+                    <td>${product.is_recommend ? '<span class="recommend">🔥 Top' + product.recommend_rank + '</span>' : ''}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('priceChart').src = '/static/charts/price_hist_' + encodeURIComponent(data.keyword) + '.png?' + Date.now();
+            document.getElementById('salesChart').src = '/static/charts/price_sales_' + encodeURIComponent(data.keyword) + '.png?' + Date.now();
+
+            results.style.display = 'block';
+        }
+
+        function formatSales(sales) {
+            if (sales >= 10000) {
+                return (sales / 10000).toFixed(1) + '万';
+            }
+            return sales.toLocaleString();
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.search-box').insertAdjacentElement('afterend', errorDiv);
+            setTimeout(() => errorDiv.remove(), 3000);
+            sampleData.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
