@@ -5,15 +5,26 @@ from datetime import datetime
 from crawler.api_client import ApiClient
 from models.product import Product
 from config.settings import MAX_PAGES, DEFAULT_PAGE_SIZE
+from config.douyin_config import DouyinConfig
 import os
 
 class DouyinCrawler:
     def __init__(self):
         self.client = ApiClient()
+        self.config = DouyinConfig()
+        
+        if not self.config.is_configured():
+            print("⚠️  警告：未配置抖音 Cookie，数据采集可能失败！")
+            print("请运行 python -m config.setup_cookie 进行配置")
     
     def search_products(self, keyword, pages=1, page_size=DEFAULT_PAGE_SIZE):
         products = []
         base_url = "https://www.douyin.com/aweme/v1/web/search/item/"
+        
+        if not self.config.is_configured():
+            print("❌ 错误：未配置有效的抖音 Cookie")
+            print("请先运行 python -m config.setup_cookie 配置 Cookie")
+            return products
         
         try:
             for page in range(pages):
@@ -45,17 +56,26 @@ class DouyinCrawler:
                     'round_trip_time': '50',
                 }
                 
-                response = self.client.get(base_url, params=params)
+                if self.config.device_id:
+                    params['device_id'] = self.config.device_id
+                
+                response = self.client.get(base_url, params=params, cookie=self.config.cookie)
                 print(f"API响应状态码: {response.status_code}")
                 data = response.json()
-                print(f"API响应数据: {json.dumps(data, ensure_ascii=False, indent=2)}")
+                
+                if response.status_code != 200:
+                    print(f"❌ API请求失败，状态码: {response.status_code}")
+                    continue
                 
                 if self._is_empty_response(data):
-                    print(f"API返回空数据，搜索关键词: {keyword}")
+                    print(f"⚠️  API返回空数据，搜索关键词: {keyword}")
+                    if 'search_nil_info' in data and data['search_nil_info'].get('search_nil_item') == 'invalid_app':
+                        print("❌ Cookie 无效或已过期，请更新 Cookie")
+                        print("运行 python -m config.setup_cookie 更新配置")
                     continue
                 
                 items = self._extract_items(data)
-                print(f"提取到 {len(items)} 条商品数据")
+                print(f"✓ 提取到 {len(items)} 条商品数据")
                 
                 for item in items:
                     product = self._parse_product(item)
@@ -66,12 +86,14 @@ class DouyinCrawler:
                     break
                     
         except Exception as e:
-            print(f"搜索时出错: {e}")
+            print(f"❌ 搜索时出错: {e}")
             import traceback
             traceback.print_exc()
         
         if not products:
-            print(f"未采集到有效数据，搜索关键词: {keyword}")
+            print(f"⚠️  未采集到有效数据，搜索关键词: {keyword}")
+        else:
+            print(f"✓ 成功采集到 {len(products)} 条商品数据")
         
         return products
     

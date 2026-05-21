@@ -11,10 +11,14 @@ class ApiClient:
         self.delay = 1.5
         self.max_retries = 3
     
-    def get(self, url, params=None, timeout=10):
+    def get(self, url, params=None, timeout=10, cookie=None):
+        headers = {}
+        if cookie:
+            headers['Cookie'] = cookie
+        
         for retry in range(self.max_retries):
             try:
-                response = self.session.get(url, params=params, timeout=timeout)
+                response = self.session.get(url, params=params, headers=headers, timeout=timeout)
                 response.raise_for_status()
                 time.sleep(self.delay + random.uniform(0.5, 1.5))
                 return response
@@ -24,10 +28,14 @@ class ApiClient:
                     continue
                 raise e
     
-    def post(self, url, data=None, json=None, timeout=10):
+    def post(self, url, data=None, json=None, timeout=10, cookie=None):
+        headers = {}
+        if cookie:
+            headers['Cookie'] = cookie
+        
         for retry in range(self.max_retries):
             try:
-                response = self.session.post(url, data=data, json=json, timeout=timeout)
+                response = self.session.post(url, data=data, json=json, headers=headers, timeout=timeout)
                 response.raise_for_status()
                 time.sleep(self.delay + random.uniform(0.5, 1.5))
                 return response
