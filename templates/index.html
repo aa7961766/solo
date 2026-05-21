@@ -12,6 +12,9 @@
         .header { text-align: center; color: white; margin-bottom: 30px; }
         .header h1 { font-size: 2.5rem; margin-bottom: 10px; }
         .header p { opacity: 0.9; }
+        .cookie-alert { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .cookie-alert.show { display: block; }
+        .cookie-alert a { color: #856404; font-weight: bold; cursor: pointer; text-decoration: underline; }
         .search-box { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
         .search-form { display: flex; gap: 15px; }
         .search-form input { flex: 1; padding: 15px 20px; font-size: 16px; border: 2px solid #e0e0e0; border-radius: 8px; transition: border-color 0.3s; }
@@ -47,6 +50,32 @@
         .sample-data h3 { margin-bottom: 20px; color: #333; }
         .sample-data .hint { color: #666; margin-bottom: 15px; font-style: italic; }
         .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background-color: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; color: #333; }
+        .close { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: #000; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .form-group textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: monospace; resize: vertical; min-height: 120px; }
+        .form-group textarea:focus { outline: none; border-color: #667eea; }
+        .form-group small { color: #666; font-size: 12px; }
+        .btn-group { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+        .instructions { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .instructions h3 { margin-top: 0; color: #333; font-size: 16px; }
+        .instructions ol { margin: 10px 0; padding-left: 20px; }
+        .instructions li { margin-bottom: 8px; color: #666; }
+        .success-message { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .success-message.show { display: block; }
     </style>
 </head>
 <body>
@@ -56,6 +85,11 @@
             <p>自动从抖音采集商品信息，智能对比价格与性价比</p>
         </div>
         
+        <div id="cookieAlert" class="cookie-alert">
+            ⚠️ 您还未配置抖音 Cookie，无法获取真实数据！
+            <a onclick="showCookieModal()">立即配置 Cookie</a>
+        </div>
+        
         <div class="search-box">
             <form class="search-form" id="searchForm">
                 <input type="text" id="keyword" placeholder="请输入商品关键词，例如：手机、耳机、笔记本电脑" required>
@@ -63,6 +97,7 @@
                     <span id="btnText">开始采集</span>
                     <span id="btnLoading" style="display:none;">采集中...</span>
                 </button>
+                <button type="button" onclick="showCookieModal()" style="background: #28a745;">⚙️ 设置Cookie</button>
             </form>
         </div>
         
@@ -116,7 +151,7 @@
         
         <div id="sampleData" class="sample-data">
             <h3>📋 示例数据展示</h3>
-            <p class="hint">以下是预设的示例数据，展示工具的核心功能：</p>
+            <p class="hint">以下是预设的示例数据，展示工具的核心功能。请配置 Cookie 以获取真实数据：</p>
             <div class="comparison-table">
                 <div class="table-header">
                     <h2>🎯 示例商品对比 (关键词: 无线耳机)</h2>
@@ -161,27 +196,56 @@
                             <td>品质数码馆</td>
                             <td><span class="recommend">🔥 Top3</span></td>
                         </tr>
-                        <tr>
-                            <td>4</td>
-                            <td><a href="#" target="_blank">运动蓝牙耳机 防水防汗 超长...</a></td>
-                            <td class="price">¥129.00</td>
-                            <td>3,280</td>
-                            <td class="rating">4.6</td>
-                            <td>运动装备店</td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td><a href="#" target="_blank">高端无线耳机 HiFi音质 主动...</a></td>
-                            <td class="price">¥399.00</td>
-                            <td>2,150</td>
-                            <td class="rating">4.9</td>
-                            <td>高端音频专卖</td>
-                            <td></td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+
+    <!-- Cookie Modal -->
+    <div id="cookieModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔑 配置抖音 Cookie</h2>
+                <span class="close" onclick="hideCookieModal()">&times;</span>
+            </div>
+            
+            <div id="successMessage" class="success-message">
+                ✅ Cookie 配置成功！您现在可以开始采集商品数据了。
+            </div>
+            
+            <div class="instructions">
+                <h3>📝 Cookie 获取步骤：</h3>
+                <ol>
+                    <li>使用浏览器打开 <a href="https://www.douyin.com/" target="_blank">抖音官网</a> 并登录账号</li>
+                    <li>按 <strong>F12</strong> 打开开发者工具</li>
+                    <li>切换到 <strong>Network（网络）</strong> 选项卡</li>
+                    <li>在页面上任意操作（如点击视频）</li>
+                    <li>在 Filter 输入框输入：<code>cookie</code></li>
+                    <li>点击任意一个请求，在右侧找到 <strong>Headers → cookie</strong></li>
+                    <li>复制整个 cookie 字符串，粘贴到下方输入框</li>
+                </ol>
+                <p><strong>⚠️ 注意：</strong>Cookie 必须包含 <code>odin_tt</code> 字段才算有效！</p>
+            </div>
+            
+            <form onsubmit="saveCookie(event)">
+                <div class="form-group">
+                    <label for="cookieInput">Cookie 字符串：</label>
+                    <textarea id="cookieInput" placeholder="粘贴完整的 Cookie 字符串..." required></textarea>
+                    <small>请粘贴从浏览器开发者工具中复制的完整 Cookie，包含 odin_tt 字段</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deviceIdInput">Device ID（可选）：</label>
+                    <input type="text" id="deviceIdInput" placeholder="可选，不填也可以" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <small>从开发者工具的网络请求中可以找到 device_id 参数</small>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" onclick="hideCookieModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">💾 保存 Cookie</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -194,6 +258,69 @@
         const loadingIndicator = document.getElementById('loadingIndicator');
         const results = document.getElementById('results');
         const sampleData = document.getElementById('sampleData');
+        const cookieAlert = document.getElementById('cookieAlert');
+        const cookieModal = document.getElementById('cookieModal');
+        const successMessage = document.getElementById('successMessage');
+
+        // 检查 Cookie 配置状态
+        async function checkCookieStatus() {
+            try {
+                const response = await fetch('/api/settings/status');
+                const data = await response.json();
+                if (data.success && !data.has_cookie) {
+                    cookieAlert.classList.add('show');
+                } else {
+                    cookieAlert.classList.remove('show');
+                }
+            } catch (error) {
+                console.error('检查 Cookie 状态失败:', error);
+            }
+        }
+
+        function showCookieModal() {
+            cookieModal.classList.add('show');
+            successMessage.classList.remove('show');
+        }
+
+        function hideCookieModal() {
+            cookieModal.classList.remove('show');
+        }
+
+        async function saveCookie(event) {
+            event.preventDefault();
+            const cookie = document.getElementById('cookieInput').value.trim();
+            const deviceId = document.getElementById('deviceIdInput').value.trim();
+            
+            if (!cookie) {
+                alert('请输入 Cookie');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/settings/cookie', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cookie, device_id: deviceId })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    successMessage.classList.add('show');
+                    cookieAlert.classList.remove('show');
+                    setTimeout(() => {
+                        hideCookieModal();
+                    }, 2000);
+                } else {
+                    alert('配置失败: ' + data.message);
+                }
+            } catch (error) {
+                alert('配置失败: ' + error.message);
+            }
+        }
+
+        // 页面加载时检查 Cookie 状态
+        checkCookieStatus();
 
         searchForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -218,8 +345,12 @@
 
                 if (data.success) {
                     displayResults(data);
+                    sampleData.style.display = 'none';
                 } else {
                     showError(data.message || '采集失败');
+                    if (data.message.includes('Cookie') || data.message.includes('cookie')) {
+                        showCookieModal();
+                    }
                 }
             } catch (error) {
                 showError('网络错误，请重试');
@@ -272,8 +403,15 @@
             errorDiv.className = 'error';
             errorDiv.textContent = message;
             document.querySelector('.search-box').insertAdjacentElement('afterend', errorDiv);
-            setTimeout(() => errorDiv.remove(), 3000);
+            setTimeout(() => errorDiv.remove(), 5000);
             sampleData.style.display = 'block';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target == cookieModal) {
+                hideCookieModal();
+            }
         }
     </script>
 </body>

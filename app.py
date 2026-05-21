@@ -2,13 +2,14 @@
 import subprocess
 import sys
 import os
+from subprocess import CalledProcessError
 
 def install_dependencies():
     requirements_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
     try:
         subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', requirements_path])
         print('依赖安装完成')
-    except subprocess.CalledProcessError as e:
+    except CalledProcessError as e:
         print(f'依赖安装失败: {e}')
 
 try:
@@ -16,6 +17,7 @@ try:
     from crawler.douyin_crawler import DouyinCrawler
     from processor.data_processor import DataProcessor
     from visualizer.chart_generator import ChartGenerator
+    from config.douyin_config import DouyinConfig
 except ImportError:
     print('缺少依赖，正在自动安装...')
     install_dependencies()
@@ -23,6 +25,7 @@ except ImportError:
     from crawler.douyin_crawler import DouyinCrawler
     from processor.data_processor import DataProcessor
     from visualizer.chart_generator import ChartGenerator
+    from config.douyin_config import DouyinConfig
 
 app = Flask(__name__, template_folder='templates')
 
@@ -108,6 +111,46 @@ def crawl_api():
 @app.route('/static/charts/<filename>')
 def serve_chart(filename):
     return send_from_directory(OUTPUT_DIR, filename)
+
+@app.route('/api/settings/cookie', methods=['POST'])
+def save_cookie():
+    try:
+        data = request.get_json()
+        cookie = data.get('cookie', '').strip()
+        device_id = data.get('device_id', '').strip()
+        
+        if not cookie:
+            return jsonify({'success': False, 'message': 'Cookie 不能为空'})
+        
+        if 'odin_tt' not in cookie:
+            return jsonify({
+                'success': False, 
+                'message': 'Cookie 必须包含 odin_tt 字段'
+            })
+        
+        config = DouyinConfig()
+        config.save(cookie=cookie, device_id=device_id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Cookie 配置成功！'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/settings/status', methods=['GET'])
+def get_settings_status():
+    try:
+        config = DouyinConfig()
+        has_cookie = config.is_configured()
+        
+        return jsonify({
+            'success': True,
+            'has_cookie': has_cookie,
+            'has_device_id': bool(config.device_id)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

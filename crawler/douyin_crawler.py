@@ -59,7 +59,8 @@ class DouyinCrawler:
                 if self.config.device_id:
                     params['device_id'] = self.config.device_id
                 
-                response = self.client.get(base_url, params=params, cookie=self.config.cookie)
+                cookies_dict = self._parse_cookie_string(self.config.cookie)
+                response = self.client.get(base_url, params=params, cookies=cookies_dict)
                 print(f"API响应状态码: {response.status_code}")
                 data = response.json()
                 
@@ -96,6 +97,17 @@ class DouyinCrawler:
             print(f"✓ 成功采集到 {len(products)} 条商品数据")
         
         return products
+    
+    def _parse_cookie_string(self, cookie_str):
+        cookies = {}
+        if not cookie_str:
+            return cookies
+        for part in cookie_str.split(';'):
+            part = part.strip()
+            if '=' in part:
+                key, value = part.split('=', 1)
+                cookies[key.strip()] = value.strip()
+        return cookies
     
     def _is_empty_response(self, data):
         if not data:
