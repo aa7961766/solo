@@ -42,6 +42,11 @@ def main():
     
     try:
         raw_products = crawler.search_products(args.keyword, pages=args.pages)
+        
+        if not raw_products:
+            print(f'未找到关于 "{args.keyword}" 的商品数据，请尝试其他关键词')
+            return
+        
         print(f'原始采集到 {len(raw_products)} 条商品数据')
         
         cleaned = processor.clean_data(raw_products)

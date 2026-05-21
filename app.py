@@ -46,6 +46,14 @@ def crawl_api():
         chart_gen = ChartGenerator()
         
         raw_products = crawler.search_products(keyword, pages=2)
+        
+        if not raw_products:
+            crawler.close()
+            return jsonify({
+                'success': False,
+                'message': f'未找到关于 "{keyword}" 的商品数据，请尝试其他关键词'
+            })
+        
         cleaned = processor.clean_data(raw_products)
         unique = processor.deduplicate(cleaned)
         sorted_products = processor.sort_by_price(unique)
@@ -93,6 +101,8 @@ def crawl_api():
         })
     
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)})
 
 @app.route('/static/charts/<filename>')
