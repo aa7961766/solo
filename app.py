@@ -118,6 +118,8 @@ def save_cookie():
         data = request.get_json()
         cookie = data.get('cookie', '').strip()
         device_id = data.get('device_id', '').strip()
+        ms_token = data.get('ms_token', '').strip()
+        a_bogus = data.get('a_bogus', '').strip()
         
         if not cookie:
             return jsonify({'success': False, 'message': 'Cookie 不能为空'})
@@ -129,7 +131,7 @@ def save_cookie():
             })
         
         config = DouyinConfig()
-        config.save(cookie=cookie, device_id=device_id)
+        config.save(cookie=cookie, device_id=device_id, ms_token=ms_token, a_bogus=a_bogus)
         
         return jsonify({
             'success': True,
@@ -147,7 +149,9 @@ def get_settings_status():
         return jsonify({
             'success': True,
             'has_cookie': has_cookie,
-            'has_device_id': bool(config.device_id)
+            'has_device_id': bool(config.device_id),
+            'has_ms_token': bool(config.ms_token),
+            'has_a_bogus': bool(config.a_bogus)
         })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})

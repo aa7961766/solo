@@ -215,35 +215,52 @@
             </div>
             
             <div class="instructions">
-                <h3>📝 Cookie 获取步骤：</h3>
+                <h3>📝 Cookie 获取步骤（重要）：</h3>
                 <ol>
                     <li>使用浏览器打开 <a href="https://www.douyin.com/" target="_blank">抖音官网</a> 并登录账号</li>
                     <li>按 <strong>F12</strong> 打开开发者工具</li>
                     <li>切换到 <strong>Network（网络）</strong> 选项卡</li>
-                    <li>在页面上任意操作（如点击视频）</li>
-                    <li>在 Filter 输入框输入：<code>cookie</code></li>
-                    <li>点击任意一个请求，在右侧找到 <strong>Headers → cookie</strong></li>
-                    <li>复制整个 cookie 字符串，粘贴到下方输入框</li>
+                    <li>在页面上搜索关键词（如"耳机"）</li>
+                    <li>在 Filter 输入框输入搜索接口关键词（如 <code>search/item</code>）</li>
+                    <li>点击任意一个商品相关的 API 请求</li>
+                    <li>在右侧找到 <strong>Headers → cookie</strong>，复制整个 Cookie</li>
+                    <li>同时在 <strong>Query String Parameters</strong> 中找到 <code>msToken</code> 和 <code>a_bogus</code> 参数并复制</li>
                 </ol>
-                <p><strong>⚠️ 注意：</strong>Cookie 必须包含 <code>odin_tt</code> 字段才算有效！</p>
+                <p><strong>⚠️ 重要：</strong></p>
+                <ul style="margin-left: 20px; color: #856404;">
+                    <li>Cookie 必须包含 <code>odin_tt</code> 字段</li>
+                    <li><code>msToken</code> 通常在 Cookie 中或请求参数中</li>
+                    <li><code>a_bogus</code> 是必需的安全签名参数</li>
+                </ul>
             </div>
             
             <form onsubmit="saveCookie(event)">
                 <div class="form-group">
-                    <label for="cookieInput">Cookie 字符串：</label>
+                    <label for="cookieInput">Cookie 字符串（必需）：</label>
                     <textarea id="cookieInput" placeholder="粘贴完整的 Cookie 字符串..." required></textarea>
-                    <small>请粘贴从浏览器开发者工具中复制的完整 Cookie，包含 odin_tt 字段</small>
+                    <small>从开发者工具 Headers 中复制，包含 odin_tt 字段</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="msTokenInput">msToken（推荐）：</label>
+                    <input type="text" id="msTokenInput" placeholder="128位字母数字令牌，从请求参数或Cookie中获取" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <small>会话令牌，可从 Cookie 或 Query String Parameters 中获取</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="aBogusInput">a_bogus（重要）：</label>
+                    <input type="text" id="aBogusInput" placeholder="约160位的签名字符串" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
+                    <small>安全签名参数，从 Query String Parameters 中获取，是获取数据的关键参数</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="deviceIdInput">Device ID（可选）：</label>
-                    <input type="text" id="deviceIdInput" placeholder="可选，不填也可以" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
-                    <small>从开发者工具的网络请求中可以找到 device_id 参数</small>
+                    <input type="text" id="deviceIdInput" placeholder="可选" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;">
                 </div>
                 
                 <div class="btn-group">
                     <button type="button" class="btn btn-secondary" onclick="hideCookieModal()">取消</button>
-                    <button type="submit" class="btn btn-primary">💾 保存 Cookie</button>
+                    <button type="submit" class="btn btn-primary">💾 保存配置</button>
                 </div>
             </form>
         </div>
@@ -290,6 +307,8 @@
             event.preventDefault();
             const cookie = document.getElementById('cookieInput').value.trim();
             const deviceId = document.getElementById('deviceIdInput').value.trim();
+            const msToken = document.getElementById('msTokenInput').value.trim();
+            const aBogus = document.getElementById('aBogusInput').value.trim();
             
             if (!cookie) {
                 alert('请输入 Cookie');
@@ -300,7 +319,12 @@
                 const response = await fetch('/api/settings/cookie', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cookie, device_id: deviceId })
+                    body: JSON.stringify({ 
+                        cookie, 
+                        device_id: deviceId,
+                        ms_token: msToken,
+                        a_bogus: aBogus
+                    })
                 });
                 
                 const data = await response.json();

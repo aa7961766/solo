@@ -16,7 +16,7 @@ class ApiClient:
             try:
                 response = self.session.get(url, params=params, cookies=cookies, timeout=timeout)
                 response.raise_for_status()
-                response.encoding = response.apparent_encoding
+                response.encoding = 'utf-8'
                 time.sleep(self.delay + random.uniform(0.5, 1.5))
                 return response
             except requests.exceptions.RequestException as e:
@@ -30,7 +30,7 @@ class ApiClient:
             try:
                 response = self.session.post(url, data=data, json=json, cookies=cookies, timeout=timeout)
                 response.raise_for_status()
-                response.encoding = response.apparent_encoding
+                response.encoding = 'utf-8'
                 time.sleep(self.delay + random.uniform(0.5, 1.5))
                 return response
             except requests.exceptions.RequestException as e:

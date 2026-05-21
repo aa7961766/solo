@@ -1,6 +1,7 @@
 
 import json
 import re
+import random
 from datetime import datetime
 from crawler.api_client import ApiClient
 from models.product import Product
@@ -16,6 +17,10 @@ class DouyinCrawler:
         if not self.config.is_configured():
             print("⚠️  警告：未配置抖音 Cookie，数据采集可能失败！")
             print("请运行 python -m config.setup_cookie 进行配置")
+    
+    def _generate_ms_token(self):
+        chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        return ''.join(random.choice(chars) for _ in range(128))
     
     def search_products(self, keyword, pages=1, page_size=DEFAULT_PAGE_SIZE):
         products = []
@@ -56,10 +61,23 @@ class DouyinCrawler:
                     'round_trip_time': '50',
                 }
                 
+                if self.config.ms_token:
+                    params['msToken'] = self.config.ms_token
+                else:
+                    params['msToken'] = self._generate_ms_token()
+                
+                if self.config.a_bogus:
+                    params['a_bogus'] = self.config.a_bogus
+                    params['X-Bogus'] = self.config.a_bogus
+                
                 if self.config.device_id:
                     params['device_id'] = self.config.device_id
                 
                 cookies_dict = self._parse_cookie_string(self.config.cookie)
+                
+                if 'msToken' not in cookies_dict and 'msToken' not in self.config.cookie:
+                    pass
+                
                 response = self.client.get(base_url, params=params, cookies=cookies_dict)
                 print(f"API响应状态码: {response.status_code}")
                 data = response.json()
@@ -70,9 +88,12 @@ class DouyinCrawler:
                 
                 if self._is_empty_response(data):
                     print(f"⚠️  API返回空数据，搜索关键词: {keyword}")
-                    if 'search_nil_info' in data and data['search_nil_info'].get('search_nil_item') == 'invalid_app':
-                        print("❌ Cookie 无效或已过期，请更新 Cookie")
-                        print("运行 python -m config.setup_cookie 更新配置")
+                    if 'search_nil_info' in data:
+                        nil_item = data['search_nil_info'].get('search_nil_item', '')
+                        print(f"错误类型: {nil_item}")
+                        if nil_item == 'invalid_app':
+                            print("❌ Cookie 无效或已过期，请更新 Cookie")
+                            print("请确保 Cookie 包含有效的 odin_tt 和 msToken")
                     continue
                 
                 items = self._extract_items(data)
@@ -93,6 +114,8 @@ class DouyinCrawler:
         
         if not products:
             print(f"⚠️  未采集到有效数据，搜索关键词: {keyword}")
+            print("提示：抖音 Web API 需要有效的 msToken 和 a_bogus 签名参数")
+            print("建议：使用浏览器开发者工具从真实请求中获取这些参数")
         else:
             print(f"✓ 成功采集到 {len(products)} 条商品数据")
         
