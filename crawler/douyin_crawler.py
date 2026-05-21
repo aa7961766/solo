@@ -22,7 +22,27 @@ class DouyinCrawler:
                     'count': page_size,
                     'cursor': page * page_size,
                     'type': '0',
-                    'detail_list': '1'
+                    'detail_list': '1',
+                    'version_code': '170400',
+                    'version_name': '17.4.0',
+                    'cookie_enabled': 'true',
+                    'screen_width': '375',
+                    'screen_height': '667',
+                    'browser_language': 'zh-CN',
+                    'browser_platform': 'iPhone',
+                    'browser_name': 'Safari',
+                    'browser_version': '16.6',
+                    'browser_online': 'true',
+                    'engine_name': 'Webkit',
+                    'engine_version': '605.1.15',
+                    'os_name': 'iOS',
+                    'os_version': '16.6',
+                    'cpu_core_num': '6',
+                    'device_memory': '4',
+                    'platform': 'iOS',
+                    'downlink': '10',
+                    'effective_type': '4g',
+                    'round_trip_time': '50',
                 }
                 
                 response = self.client.get(base_url, params=params)

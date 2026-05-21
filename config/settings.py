@@ -13,11 +13,13 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 DOUYIN_API_URL = "https://www.douyin.com/aweme/v1/web/search/item/"
 
 REQUEST_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
     'Accept': 'application/json, text/plain, */*',
-    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-    'Referer': 'https://www.douyin.com/',
-    'Origin': 'https://www.douyin.com',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive',
+    'Referer': 'https://www.douyin.com/search/耳机?type=goods',
+    'Cookie': 'ttwid=1; msToken=; s_v_web_id=verify_xxx;',
 }
 
 DEFAULT_KEYWORDS = ["手机", "笔记本电脑", "耳机"]
