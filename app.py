@@ -1,9 +1,28 @@
 
-from flask import Flask, render_template, request, jsonify, send_from_directory
-from crawler.douyin_crawler import DouyinCrawler
-from processor.data_processor import DataProcessor
-from visualizer.chart_generator import ChartGenerator
+import subprocess
+import sys
 import os
+
+def install_dependencies():
+    requirements_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', requirements_path])
+        print('依赖安装完成')
+    except subprocess.CalledProcessError as e:
+        print(f'依赖安装失败: {e}')
+
+try:
+    from flask import Flask, render_template, request, jsonify, send_from_directory
+    from crawler.douyin_crawler import DouyinCrawler
+    from processor.data_processor import DataProcessor
+    from visualizer.chart_generator import ChartGenerator
+except ImportError:
+    print('缺少依赖，正在自动安装...')
+    install_dependencies()
+    from flask import Flask, render_template, request, jsonify, send_from_directory
+    from crawler.douyin_crawler import DouyinCrawler
+    from processor.data_processor import DataProcessor
+    from visualizer.chart_generator import ChartGenerator
 
 app = Flask(__name__, template_folder='templates')
 

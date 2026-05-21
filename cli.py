@@ -1,9 +1,30 @@
 
-import argparse
-from crawler.douyin_crawler import DouyinCrawler
-from processor.data_processor import DataProcessor
-from visualizer.chart_generator import ChartGenerator
-from utils.helpers import format_price, format_sales, truncate_text
+import subprocess
+import sys
+import os
+
+def install_dependencies():
+    requirements_path = os.path.join(os.path.dirname(__file__), 'requirements.txt')
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-r', requirements_path])
+        print('依赖安装完成')
+    except subprocess.CalledProcessError as e:
+        print(f'依赖安装失败: {e}')
+
+try:
+    import argparse
+    from crawler.douyin_crawler import DouyinCrawler
+    from processor.data_processor import DataProcessor
+    from visualizer.chart_generator import ChartGenerator
+    from utils.helpers import format_price, format_sales, truncate_text
+except ImportError:
+    print('缺少依赖，正在自动安装...')
+    install_dependencies()
+    import argparse
+    from crawler.douyin_crawler import DouyinCrawler
+    from processor.data_processor import DataProcessor
+    from visualizer.chart_generator import ChartGenerator
+    from utils.helpers import format_price, format_sales, truncate_text
 
 def main():
     parser = argparse.ArgumentParser(description='电商商品价格采集与对比工具')
